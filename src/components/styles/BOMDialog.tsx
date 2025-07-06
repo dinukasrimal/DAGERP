@@ -205,7 +205,6 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
   };
 
   const handleClose = () => {
-    setEditingItem(null);
     setShowAddForm(false);
     setNewItem({
       materialCode: '',
