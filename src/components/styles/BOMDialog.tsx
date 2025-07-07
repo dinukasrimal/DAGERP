@@ -128,6 +128,7 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
   const [openAddMaterial, setOpenAddMaterial] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedConsumptions, setSelectedConsumptions] = useState<{[key: string]: string}>({});
 
   const steps = [
     'BOM Overview',
@@ -392,8 +393,120 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
     );
   };
 
+  const toggleAllPrefixes = (entryId: string, prefix: 'style' | 'size' | 'color', value: boolean) => {
+    setBomEntries(prev =>
+      prev.map(entry => {
+        if (entry.id === entryId) {
+          const updatedSubMaterials = entry.subMaterials.map(sub => {
+            const updatedPrefixes = { ...sub.prefixes, [prefix]: value };
+            
+            let newCode = entry.material.code;
+            let newName = entry.material.name;
+            
+            if (updatedPrefixes.style) {
+              newCode += `-${style?.styleCode}`;
+              newName += ` - ${style?.styleCode}`;
+            }
+            if (updatedPrefixes.size && sub.size) {
+              newCode += `-${sub.size}`;
+              newName += ` - ${sub.size}`;
+            }
+            if (updatedPrefixes.color && sub.color) {
+              newCode += `-${sub.color}`;
+              newName += ` - ${sub.color}`;
+            }
+            
+            return {
+              ...sub,
+              prefixes: updatedPrefixes,
+              code: newCode,
+              name: newName,
+            };
+          });
+          
+          return { ...entry, subMaterials: updatedSubMaterials };
+        }
+        return entry;
+      })
+    );
+  };
+
   const removeBOMEntry = (entryId: string) => {
     setBomEntries(prev => prev.filter(entry => entry.id !== entryId));
+  };
+
+  const getSelectedConsumption = (entryId: string) => {
+    const selectedId = selectedConsumptions[entryId];
+    if (!selectedId) return null;
+    
+    const entry = bomEntries.find(e => e.id === entryId);
+    return entry?.consumptions.find(c => c.id === selectedId) || null;
+  };
+
+  const applyConsumptionToAll = (entryId: string) => {
+    const selectedConsumption = getSelectedConsumption(entryId);
+    if (!selectedConsumption || selectedConsumption.consumption <= 0) return;
+
+    setBomEntries(prev =>
+      prev.map(entry => {
+        if (entry.id === entryId) {
+          return {
+            ...entry,
+            consumptions: entry.consumptions.map(consumption => ({
+              ...consumption,
+              consumption: selectedConsumption.consumption
+            }))
+          };
+        }
+        return entry;
+      })
+    );
+  };
+
+  const applyConsumptionToSizes = (entryId: string) => {
+    const selectedConsumption = getSelectedConsumption(entryId);
+    if (!selectedConsumption || selectedConsumption.consumption <= 0 || !selectedConsumption.size) return;
+
+    setBomEntries(prev =>
+      prev.map(entry => {
+        if (entry.id === entryId) {
+          return {
+            ...entry,
+            consumptions: entry.consumptions.map(consumption => {
+              // Apply to all entries that have the same size
+              if (consumption.size === selectedConsumption.size) {
+                return { ...consumption, consumption: selectedConsumption.consumption };
+              }
+              return consumption;
+            })
+          };
+        }
+        return entry;
+      })
+    );
+  };
+
+  const applyConsumptionToColors = (entryId: string) => {
+    const selectedConsumption = getSelectedConsumption(entryId);
+    if (!selectedConsumption || selectedConsumption.consumption <= 0 || !selectedConsumption.color) return;
+
+    setBomEntries(prev =>
+      prev.map(entry => {
+        if (entry.id === entryId) {
+          return {
+            ...entry,
+            consumptions: entry.consumptions.map(consumption => {
+              // Apply to all entries that have the same color
+              if (consumption.color === selectedConsumption.color) {
+                return { ...consumption, consumption: selectedConsumption.consumption };
+              }
+              return consumption;
+            })
+          };
+        }
+        return entry;
+      })
+    );
   };
 
   const handleGenerateAllSubMaterials = () => {
@@ -636,10 +749,55 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
+                  {/* Apply Section */}
+                  <Card sx={{ mb: 3, bgcolor: 'rgba(25, 118, 210, 0.04)' }}>
+                    <CardContent>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Apply Selected Consumption
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => applyConsumptionToAll(entry.id)}
+                          disabled={!selectedConsumptions[entry.id]}
+                        >
+                          Apply to All
+                        </Button>
+                        {entry.planningType.includes('size') && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            onClick={() => applyConsumptionToSizes(entry.id)}
+                            disabled={!selectedConsumptions[entry.id] || !getSelectedConsumption(entry.id)?.size}
+                          >
+                            Apply to Same Size
+                          </Button>
+                        )}
+                        {entry.planningType.includes('color') && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            onClick={() => applyConsumptionToColors(entry.id)}
+                            disabled={!selectedConsumptions[entry.id] || !getSelectedConsumption(entry.id)?.color}
+                          >
+                            Apply to Same Color
+                          </Button>
+                        )}
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        Select a row (radio button), enter consumption value, then click apply button to copy to related entries
+                      </Typography>
+                    </CardContent>
+                  </Card>
+
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
+                          <TableCell padding="checkbox">Select</TableCell>
                           {entry.planningType.includes('size') && <TableCell>Size</TableCell>}
                           {entry.planningType.includes('color') && <TableCell>Color</TableCell>}
                           <TableCell>Consumption</TableCell>
@@ -648,7 +806,28 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
                       </TableHead>
                       <TableBody>
                         {entry.consumptions.map((consumption) => (
-                          <TableRow key={consumption.id}>
+                          <TableRow 
+                            key={consumption.id}
+                            sx={{
+                              bgcolor: selectedConsumptions[entry.id] === consumption.id ? 'rgba(25, 118, 210, 0.08)' : 'inherit'
+                            }}
+                          >
+                            <TableCell padding="checkbox">
+                              <FormControlLabel
+                                control={
+                                  <Radio
+                                    checked={selectedConsumptions[entry.id] === consumption.id}
+                                    onChange={() => setSelectedConsumptions(prev => ({
+                                      ...prev,
+                                      [entry.id]: consumption.id
+                                    }))}
+                                    size="small"
+                                  />
+                                }
+                                label=""
+                                sx={{ margin: 0 }}
+                              />
+                            </TableCell>
                             {entry.planningType.includes('size') && (
                               <TableCell>
                                 {consumption.size ? (
@@ -703,15 +882,102 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
+                  {/* Bulk Select Controls */}
+                  <Card sx={{ mb: 3, bgcolor: 'rgba(76, 175, 80, 0.04)' }}>
+                    <CardContent>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Bulk Prefix Controls
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
+                            Style Prefix:
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => toggleAllPrefixes(entry.id, 'style', true)}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => toggleAllPrefixes(entry.id, 'style', false)}
+                          >
+                            Unselect All
+                          </Button>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
+                            Size Prefix:
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            onClick={() => toggleAllPrefixes(entry.id, 'size', true)}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            onClick={() => toggleAllPrefixes(entry.id, 'size', false)}
+                          >
+                            Unselect All
+                          </Button>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
+                            Color Prefix:
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            onClick={() => toggleAllPrefixes(entry.id, 'color', true)}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="secondary"
+                            onClick={() => toggleAllPrefixes(entry.id, 'color', false)}
+                          >
+                            Unselect All
+                          </Button>
+                        </Box>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        Quickly select or unselect all prefixes for this material
+                      </Typography>
+                    </CardContent>
+                  </Card>
+
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
                           <TableCell>Generated Code</TableCell>
                           <TableCell>Material Name</TableCell>
-                          <TableCell>Style Prefix</TableCell>
-                          <TableCell>Size Prefix</TableCell>
-                          <TableCell>Color Prefix</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              Style Prefix
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              Size Prefix
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              Color Prefix
+                            </Box>
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
