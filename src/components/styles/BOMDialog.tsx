@@ -883,79 +883,70 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
                 </AccordionSummary>
                 <AccordionDetails>
                   {/* Bulk Select Controls */}
-                  <Card sx={{ mb: 3, bgcolor: 'rgba(76, 175, 80, 0.04)' }}>
-                    <CardContent>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Bulk Prefix Controls
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
-                            Style Prefix:
-                          </Typography>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => toggleAllPrefixes(entry.id, 'style', true)}
-                          >
-                            Select All
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => toggleAllPrefixes(entry.id, 'style', false)}
-                          >
-                            Unselect All
-                          </Button>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
-                            Size Prefix:
-                          </Typography>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="primary"
-                            onClick={() => toggleAllPrefixes(entry.id, 'size', true)}
-                          >
-                            Select All
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="primary"
-                            onClick={() => toggleAllPrefixes(entry.id, 'size', false)}
-                          >
-                            Unselect All
-                          </Button>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ minWidth: 100, fontWeight: 500 }}>
-                            Color Prefix:
-                          </Typography>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="secondary"
-                            onClick={() => toggleAllPrefixes(entry.id, 'color', true)}
-                          >
-                            Select All
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="secondary"
-                            onClick={() => toggleAllPrefixes(entry.id, 'color', false)}
-                          >
-                            Unselect All
-                          </Button>
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        Quickly select or unselect all prefixes for this material
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'rgba(76, 175, 80, 0.04)', borderRadius: 1, border: '1px solid rgba(76, 175, 80, 0.2)' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Bulk Controls:
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>Style:</Typography>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => toggleAllPrefixes(entry.id, 'style', true)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        All
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => toggleAllPrefixes(entry.id, 'style', false)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        None
+                      </Button>
+                      
+                      <Typography variant="caption" sx={{ color: 'text.secondary', ml: 2 }}>Size:</Typography>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="primary"
+                        onClick={() => toggleAllPrefixes(entry.id, 'size', true)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        All
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="primary"
+                        onClick={() => toggleAllPrefixes(entry.id, 'size', false)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        None
+                      </Button>
+                      
+                      <Typography variant="caption" sx={{ color: 'text.secondary', ml: 2 }}>Color:</Typography>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="secondary"
+                        onClick={() => toggleAllPrefixes(entry.id, 'color', true)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        All
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="secondary"
+                        onClick={() => toggleAllPrefixes(entry.id, 'color', false)}
+                        sx={{ minWidth: 'auto', p: 0.5, fontSize: '0.75rem' }}
+                      >
+                        None
+                      </Button>
+                    </Box>
+                  </Box>
 
                   <TableContainer component={Paper}>
                     <Table size="small">
