@@ -64,12 +64,10 @@ interface RawMaterial {
   id: string;
   code: string;
   name: string;
-  description: string;
   planUnit: string;
   purchaseUnit: string;
   conversionFactor: number;
   category: string;
-  supplier?: string;
 }
 
 interface BOMEntry {
@@ -155,9 +153,8 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
       setRawMaterials([
         {
           id: 'rm-001',
-          code: 'FAB-001',
+          code: 'FAB-COT001',
           name: 'Cotton Fabric 160GSM',
-          description: 'Main fabric for t-shirts',
           planUnit: 'MTR',
           purchaseUnit: 'YRD',
           conversionFactor: 1.094,
@@ -165,9 +162,8 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
         },
         {
           id: 'rm-002',
-          code: 'THR-001',
+          code: 'THR-POL002',
           name: 'Polyester Thread',
-          description: 'Sewing thread',
           planUnit: 'MTR',
           purchaseUnit: 'CONE',
           conversionFactor: 5000,
@@ -175,9 +171,8 @@ const BOMDialog: React.FC<BOMDialogProps> = ({
         },
         {
           id: 'rm-003',
-          code: 'BTN-001',
+          code: 'BTN-PLA003',
           name: 'Plastic Button 15mm',
-          description: 'Main buttons',
           planUnit: 'PCS',
           purchaseUnit: 'GROSS',
           conversionFactor: 144,

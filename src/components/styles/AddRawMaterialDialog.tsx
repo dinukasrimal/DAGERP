@@ -25,12 +25,10 @@ interface AddRawMaterialDialogProps {
 interface RawMaterialData {
   code: string;
   name: string;
-  description: string;
   planUnit: string;
   purchaseUnit: string;
   conversionFactor: number;
   category: string;
-  supplier?: string;
 }
 
 const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
@@ -40,18 +38,19 @@ const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
 
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<RawMaterialData>({
+  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<RawMaterialData>({
     defaultValues: {
       code: '',
       name: '',
-      description: '',
       planUnit: 'MTR',
       purchaseUnit: 'MTR',
       conversionFactor: 1,
       category: 'Fabric',
-      supplier: '',
     },
   });
+
+  const watchedCategory = watch('category');
+  const watchedName = watch('name');
 
   const unitOptions = [
     'MTR', 'YRD', 'KG', 'GM', 'LTR', 'ML', 'PCS', 'SET', 'PAIR', 'DOZEN', 'CONE', 'ROLL'
@@ -70,6 +69,34 @@ const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
     'Packaging',
     'Other'
   ];
+
+  const categoryPrefixes = {
+    'Fabric': 'FAB',
+    'Thread': 'THR',
+    'Button': 'BTN',
+    'Zipper': 'ZIP',
+    'Label': 'LAB',
+    'Elastic': 'ELA',
+    'Lining': 'LIN',
+    'Interfacing': 'INT',
+    'Accessories': 'ACC',
+    'Packaging': 'PKG',
+    'Other': 'OTH'
+  };
+
+  // Auto-generate material code when category or name changes
+  React.useEffect(() => {
+    if (watchedCategory && watchedName) {
+      const prefix = categoryPrefixes[watchedCategory as keyof typeof categoryPrefixes];
+      const namePart = watchedName
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 3);
+      const timestamp = Date.now().toString().slice(-3);
+      const generatedCode = `${prefix}-${namePart}${timestamp}`;
+      setValue('code', generatedCode);
+    }
+  }, [watchedCategory, watchedName, setValue]);
 
   const onSubmit = async (data: RawMaterialData) => {
     try {
@@ -100,6 +127,8 @@ const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
       
       <DialogContent>
         <Alert severity="info" sx={{ mb: 3 }}>
+          <strong>Material Code:</strong> Auto-generated based on category and name
+          <br />
           <strong>Plan Unit:</strong> Unit used for consumption planning (e.g., MTR for fabric consumption)
           <br />
           <strong>Purchase Unit:</strong> Unit in which material is purchased (e.g., YRD for fabric rolls)
@@ -111,24 +140,20 @@ const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Controller
-                name="code"
+                name="category"
                 control={control}
-                rules={{ 
-                  required: 'Material code is required',
-                  pattern: {
-                    value: /^[A-Z0-9-]+$/,
-                    message: 'Code should contain only uppercase letters, numbers, and hyphens'
-                  }
-                }}
+                rules={{ required: 'Category is required' }}
                 render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Material Code"
-                    fullWidth
-                    error={!!errors.code}
-                    helperText={errors.code?.message || 'e.g., FAB-001, THR-002'}
-                    placeholder="FAB-001"
-                  />
+                  <FormControl fullWidth error={!!errors.category}>
+                    <InputLabel>Category</InputLabel>
+                    <Select {...field} label="Category">
+                      {categoryOptions.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 )}
               />
               
@@ -150,52 +175,23 @@ const AddRawMaterialDialog: React.FC<AddRawMaterialDialogProps> = ({
             </Box>
 
             <Controller
-              name="description"
+              name="code"
               control={control}
+              rules={{ 
+                required: 'Material code is required'
+              }}
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Description"
+                  label="Material Code (Auto-Generated)"
                   fullWidth
-                  multiline
-                  rows={2}
-                  placeholder="Detailed description of the material..."
+                  disabled
+                  error={!!errors.code}
+                  helperText={errors.code?.message || 'Generated automatically based on category and name'}
+                  placeholder="Will be generated automatically"
                 />
               )}
             />
-
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Controller
-                name="category"
-                control={control}
-                rules={{ required: 'Category is required' }}
-                render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.category}>
-                    <InputLabel>Category</InputLabel>
-                    <Select {...field} label="Category">
-                      {categoryOptions.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-              />
-
-              <Controller
-                name="supplier"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Supplier (Optional)"
-                    fullWidth
-                    placeholder="Supplier name"
-                  />
-                )}
-              />
-            </Box>
 
             <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1 }}>
               Unit Configuration
